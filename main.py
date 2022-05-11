@@ -1,8 +1,10 @@
 # img_viewer.py
+import os
+import subprocess
 
 import PySimpleGUI as sg
 import os.path
-import subprocess
+from subprocess import call
 #from detect import highlightFace
 # First the window layout in 2 columns
 
@@ -35,7 +37,7 @@ layout = [
     ]
 ]
 
-window = sg.Window("Image Viewer", layout)
+window = sg.Window("Face Detection Application", layout)
 
 # Run the Event Loop
 while True:
@@ -55,7 +57,7 @@ while True:
             f
             for f in file_list
             if os.path.isfile(os.path.join(folder, f))
-            and f.lower().endswith((".png", ".gif"))
+            and f.lower().endswith((".png", ".gif",".jpg"))
         ]
         window["-FILE LIST-"].update(fnames)
     elif event == "-FILE LIST-":  # A file was chosen from the listbox
@@ -64,7 +66,7 @@ while True:
                 values["-FOLDER-"], values["-FILE LIST-"][0]
             )
             window["-TOUT-"].update(filename)
-            subprocess.call(" python detect.py --image "+filename, shell=True)
+            subprocess.run("python detect.py --image {f}".format(f=filename),shell=True)
             window["-IMAGE-"].update(filename=filename)
 
         except:

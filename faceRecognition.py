@@ -34,7 +34,7 @@ def getDirectoryFileItems():
             fileList = []
 
         fileNames = [f for f in fileList if os.path.isfile(os.path.join(folderPath, f))
-                     and f.lower().endswith((".png", ".gif", ".jpg"))]
+                     and f.lower().endswith((".png", ".gif", ".jpg",".jfif"))]
 
         for i in range(len(fileNames)):
             leftPanelListBox.insert(i, fileNames[i])

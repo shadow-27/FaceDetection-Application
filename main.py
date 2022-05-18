@@ -1,75 +1,108 @@
-# img_viewer.py
+import io
 import os
 import subprocess
+from tkinter import *
+from tkinter import filedialog
 
-import PySimpleGUI as sg
-import os.path
-from subprocess import call
-#from detect import highlightFace
-# First the window layout in 2 columns
+import numpy
+from PIL import ImageTk, Image
 
-file_list_column = [
-    [
-        sg.Text("Image Folder"),
-        sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
-        sg.FolderBrowse(),
-    ],
-    [
-        sg.Listbox(
-            values=[], enable_events=True, size=(40, 20), key="-FILE LIST-"
-        )
-    ],
-]
+WINDOW_WIDTH = 1200
+WINDOW_HEIGHT = 600
+LEFT_PANEL_WIDTH = 200
+IMAGE_PANEL_WIDTH = 500
+IMAGE_PANEL_HEIGHT = 600
+SCALE_FACTOR = 1.5
 
-# For now will only show the name of the file that was chosen
-image_viewer_column = [
-    [sg.Text("Choose an image from list on left:")],
-    [sg.Text(size=(40, 1), key="-TOUT-")],
-    [sg.Image(key="-IMAGE-")],
-]
+folderPath = ''
 
-# ----- Full layout -----
-layout = [
-    [
-        sg.Column(file_list_column),
-        sg.VSeperator(),
-        sg.Column(image_viewer_column),
-    ]
-]
 
-window = sg.Window("Face Detection Application", layout)
+def cursorSelect(evt):
+    value = leftPanelListBox.get(leftPanelListBox.curselection())
+    resizedImage = resizeImage(Image.open(folderPath + '/' + value))
+    middlePanelCanvas.create_image(0, 0, image=resizedImage, anchor=NW)
+    middlePanelCanvas.image = resizedImage
+    subprocess.run("python detect.py --image {f}".format(f=folderPath[folderPath.rfind('/') + 1:] + "\\" + value),
+                   check=True, capture_output=True)
+    resizedImage = resizeImage(Image.open('results/' + value))
+    rightPanelCanvas.create_image(0, 0, image=resizedImage, anchor=NW)
+    rightPanelCanvas.image = resizedImage
 
-# Run the Event Loop
-while True:
-    event, values = window.read()
-    if event == "Exit" or event == sg.WIN_CLOSED:
-        break
-    # Folder name was filled in, make a list of files in the folder
-    if event == "-FOLDER-":
-        folder = values["-FOLDER-"]
+
+def getDirectoryFileItems():
+    global folderPath
+    folderPath = filedialog.askdirectory()
+    if folderPath != '':
         try:
-            # Get list of files in folder
-            file_list = os.listdir(folder)
+            fileList = os.listdir(folderPath)
         except:
-            file_list = []
+            fileList = []
 
-        fnames = [
-            f
-            for f in file_list
-            if os.path.isfile(os.path.join(folder, f))
-            and f.lower().endswith((".png", ".gif",".jpg"))
-        ]
-        window["-FILE LIST-"].update(fnames)
-    elif event == "-FILE LIST-":  # A file was chosen from the listbox
-        try:
-            filename = os.path.join(
-                values["-FOLDER-"], values["-FILE LIST-"][0]
-            )
-            window["-TOUT-"].update(filename)
-            subprocess.run("python detect.py --image {f}".format(f=filename),shell=True)
-            window["-IMAGE-"].update(filename=filename)
+        fileNames = [f for f in fileList if os.path.isfile(os.path.join(folderPath, f))
+                     and f.lower().endswith((".png", ".gif", ".jpg"))]
 
-        except:
-            pass
+        leftPanelListBox.delete(0, END)
+        for i in range(len(fileNames)):
+            leftPanelListBox.insert(i, fileNames[i])
 
-window.close()
+
+def resizeImage(originalImage):
+    originalImageWidth = ImageTk.PhotoImage(originalImage).width()
+    originalImageHeight = ImageTk.PhotoImage(originalImage).height()
+    resizedImage = ImageTk.PhotoImage(
+        originalImage.resize(
+            (int(originalImageWidth / (originalImageHeight + originalImageWidth) * IMAGE_PANEL_WIDTH * SCALE_FACTOR),
+             int(originalImageHeight / (originalImageHeight + originalImageWidth) * IMAGE_PANEL_HEIGHT * SCALE_FACTOR)),
+            Image.ANTIALIAS))
+    return resizedImage
+
+
+# Root
+root = Tk()
+root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
+root.maxsize(WINDOW_WIDTH, WINDOW_HEIGHT)
+root.minsize(WINDOW_WIDTH, WINDOW_HEIGHT)
+root.resizable(0, 0)
+root.title("Face Recogniton Editor")
+
+# Main Panel
+mainPanel = PanedWindow(bg='gray', borderwidth=1)
+mainPanel.pack(fill=BOTH, expand=1)
+
+# Left Panel
+leftPanel = PanedWindow(mainPanel, orient=VERTICAL)
+leftPanelFrame = Frame(leftPanel)
+leftPanel.add(leftPanelFrame)
+leftPanelLabel1 = Label(leftPanelFrame, text="Details", anchor=N)
+leftPanelLabel1.pack()
+leftPanelLabel2 = Label(leftPanelFrame, text="Image Files", anchor=N)
+leftPanelListBox = Listbox(leftPanelFrame, selectmode=SINGLE, width=30, height=20)
+leftPanelListBox.bind('<<ListboxSelect>>', cursorSelect)
+mainPanel.paneconfigure(leftPanel, width=LEFT_PANEL_WIDTH)
+mainPanel.add(leftPanel)
+
+# Middle Panel
+middlePanel = PanedWindow(mainPanel, orient=VERTICAL)
+middlePanelLabel = Label(middlePanel, text="Original Image", anchor=N)
+middlePanel.add(middlePanelLabel)
+middlePanelCanvas = Canvas(middlePanel, bd=3, relief=GROOVE)
+middlePanel.add(middlePanelCanvas)
+mainPanel.paneconfigure(middlePanel, width=IMAGE_PANEL_WIDTH)
+mainPanel.add(middlePanel)
+
+# Right Panel
+rightPanel = PanedWindow(mainPanel, orient=VERTICAL)
+rightPanelLabel = Label(rightPanel, text="Face(s) Detected", anchor=N)
+rightPanel.add(rightPanelLabel)
+rightPanelCanvas = Canvas(rightPanel, bd=3, relief=GROOVE)
+rightPanel.add(rightPanelCanvas)
+mainPanel.paneconfigure(rightPanel, width=IMAGE_PANEL_WIDTH)
+mainPanel.add(rightPanel)
+
+leftPanelButton = Button(leftPanelFrame, text='Browse', width=25, height=1,
+                         command=lambda: getDirectoryFileItems())
+leftPanelButton.pack()
+leftPanelLabel2.pack()
+leftPanelListBox.pack()
+
+root.mainloop()

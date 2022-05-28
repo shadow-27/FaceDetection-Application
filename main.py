@@ -73,11 +73,13 @@ def detect(faceNet,frame):
         agePreds = ageNet.forward()
         age = ageList[agePreds[0].argmax()]
         ageConfidence = agePreds[0][agePreds[0].argmax()]
-        ac = round(ageConfidence, 2)
-        print(f'Age: {age[1:-1]} years')
-        print(type(ac))
 
-        cv2.putText(resultImg, f'{gender}, {age},{ac}', (faceBox[0], faceBox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+
+        ac_percentage = "{:.0%}".format(round(ageConfidence, 2))
+        ac_percentage =str(ac_percentage)
+        print(f'Age: {age[1:-1]} years')
+
+        cv2.putText(resultImg, f'{gender}, {age},{ac_percentage}', (faceBox[0], faceBox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                     (0, 255, 255), 2, cv2.LINE_AA)
     return resultImg
 

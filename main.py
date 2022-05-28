@@ -143,7 +143,7 @@ while True:
             )
             window["-TOUT-"].update(filename)
 
-            #test = subprocess.run("python detect.py --image {f}".format(f=filename),shell=True)
+
             img = cv2.imread(filename)
 
             result = detect(faceNet=faceNet,frame=img)

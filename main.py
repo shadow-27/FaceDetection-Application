@@ -20,11 +20,10 @@ results = ''
 
 def checkIfItsJpg(fileName):
     # convert to jpg if png
-    if fileName[fileName.rfind('.') + 1:] == "png":
+    if fileName[fileName.rfind('.') + 1:] != "jpg":
         tmpImage = Image.open(folderPath[folderPath.rfind('/') + 1:] + '\\' + fileName)
         fileName = 'tmp\\' + fileName[: fileName.rfind('.') + 1] + 'jpg'
         tmpImage.save(folderPath[folderPath.rfind('/') + 1:] + '\\' + fileName)
-        print(folderPath[folderPath.rfind('/') + 1:] + '\\' + fileName)
         return fileName
     return fileName
 
@@ -39,7 +38,7 @@ def cursorSelect(evt):
                                                                      checkIfItsJpg(value)),
                              check=True, capture_output=True).stdout.decode("utf-8")
     resultLabel["text"] = results;
-    resizedImage = resizeImage(Image.open('results/' + value))
+    resizedImage = resizeImage(Image.open('results/' + value[: value.rfind('.') + 1]+"jpg"))
     rightPanelCanvas.create_image(0, 0, image=resizedImage, anchor=NW)
     rightPanelCanvas.image = resizedImage
 

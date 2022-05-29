@@ -15,15 +15,29 @@ IMAGE_PANEL_HEIGHT = 600
 SCALE_FACTOR = 1.5
 
 folderPath = ''
+results = ''
+
+def checkIfItsJpg(fileName):
+    # convert to jpg if png
+    if fileName[fileName.rfind('.') + 1:] == "png":
+        tmpImage = Image.open(folderPath[folderPath.rfind('/') + 1:]+'\\' + fileName)
+        fileName = 'tmp\\'+fileName[: fileName.rfind('.') + 1] + 'jpg'
+        tmpImage.save(folderPath[folderPath.rfind('/') + 1:] +'\\'+ fileName)
+        print(folderPath[folderPath.rfind('/') + 1:] +'\\'+ fileName)
+        return fileName
+    return fileName
 
 
 def cursorSelect(evt):
+    global results
     value = leftPanelListBox.get(leftPanelListBox.curselection())
     resizedImage = resizeImage(Image.open(folderPath + '/' + value))
     middlePanelCanvas.create_image(0, 0, image=resizedImage, anchor=NW)
     middlePanelCanvas.image = resizedImage
-    subprocess.run("python detect.py --image {f}".format(f=folderPath[folderPath.rfind('/') + 1:] + "\\" + value),
-                   check=True, capture_output=True)
+    results = subprocess.run("python detect.py --image {f}".format(f=folderPath[folderPath.rfind('/') + 1:] + "\\" +
+                                                           checkIfItsJpg(value)),
+                   check=True, capture_output=True).stdout.decode("utf-8")
+    resultLabel["text"] = results;
     resizedImage = resizeImage(Image.open('results/' + value))
     rightPanelCanvas.create_image(0, 0, image=resizedImage, anchor=NW)
     rightPanelCanvas.image = resizedImage
@@ -39,7 +53,7 @@ def getDirectoryFileItems():
             fileList = []
 
         fileNames = [f for f in fileList if os.path.isfile(os.path.join(folderPath, f))
-                     and f.lower().endswith((".png", ".gif", ".jpg"))]
+                     and f.lower().endswith((".png", ".jpg"))]
 
         leftPanelListBox.delete(0, END)
         for i in range(len(fileNames)):
@@ -73,10 +87,9 @@ mainPanel.pack(fill=BOTH, expand=1)
 leftPanel = PanedWindow(mainPanel, orient=VERTICAL)
 leftPanelFrame = Frame(leftPanel)
 leftPanel.add(leftPanelFrame)
-leftPanelLabel1 = Label(leftPanelFrame, text="Details", anchor=N)
-leftPanelLabel1.pack()
-leftPanelLabel2 = Label(leftPanelFrame, text="Image Files", anchor=N)
-leftPanelListBox = Listbox(leftPanelFrame, selectmode=SINGLE, width=30, height=20)
+Label(leftPanelFrame, text="Details", anchor=N).pack()
+leftPanelLabel1 = Label(leftPanelFrame, text="Image Files", anchor=N)
+leftPanelListBox = Listbox(leftPanelFrame, selectmode=SINGLE, width=30, height=15)
 leftPanelListBox.bind('<<ListboxSelect>>', cursorSelect)
 mainPanel.paneconfigure(leftPanel, width=LEFT_PANEL_WIDTH)
 mainPanel.add(leftPanel)
@@ -102,7 +115,10 @@ mainPanel.add(rightPanel)
 leftPanelButton = Button(leftPanelFrame, text='Browse', width=25, height=1,
                          command=lambda: getDirectoryFileItems())
 leftPanelButton.pack()
-leftPanelLabel2.pack()
+leftPanelLabel1.pack()
 leftPanelListBox.pack()
+Label(leftPanelFrame, text="Results", anchor=N).pack()
+resultLabel = Label(leftPanelFrame, text=results, anchor=N)
+resultLabel.pack()
 
 root.mainloop()

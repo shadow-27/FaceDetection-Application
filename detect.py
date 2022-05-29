@@ -72,13 +72,18 @@ def getResult():
             ageNet.setInput(blob)
             agePreds = ageNet.forward()
             age = ageList[agePreds[0].argmax()]
+            ageConfidence = agePreds[0][agePreds[0].argmax()]
+
+            ac_percentage = "{:.0%}".format(round(ageConfidence, 2))
+            ac_percentage = str(ac_percentage)
             # print(f'Age: {age[1:-1]} years')
 
-            cv2.putText(resultImg, f'{gender}, {age}', (faceBox[0], faceBox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+            cv2.putText(resultImg, f'{gender}, {age},{ac_percentage}', (faceBox[0], faceBox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                         (0, 255, 255), 2, cv2.LINE_AA)
 
             img = Image.fromarray(cv2.cvtColor(resultImg, cv2.COLOR_BGR2RGB), 'RGB')
-            img.save('results\\'+args.image[args.image.rfind('\\') + 1:])
+            img.save('results\\' + args.image[args.image.rfind('\\') + 1:])
+            print(gender, age, ac_percentage)
             # cv2.imshow("Detecting age and gender", resultImg)
 
 

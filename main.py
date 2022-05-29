@@ -8,7 +8,7 @@ import numpy
 from PIL import ImageTk, Image
 
 WINDOW_WIDTH = 1200
-WINDOW_HEIGHT = 600
+WINDOW_HEIGHT = 620
 LEFT_PANEL_WIDTH = 200
 IMAGE_PANEL_WIDTH = 500
 IMAGE_PANEL_HEIGHT = 600
@@ -17,13 +17,14 @@ SCALE_FACTOR = 1.5
 folderPath = ''
 results = ''
 
+
 def checkIfItsJpg(fileName):
     # convert to jpg if png
     if fileName[fileName.rfind('.') + 1:] == "png":
-        tmpImage = Image.open(folderPath[folderPath.rfind('/') + 1:]+'\\' + fileName)
-        fileName = 'tmp\\'+fileName[: fileName.rfind('.') + 1] + 'jpg'
-        tmpImage.save(folderPath[folderPath.rfind('/') + 1:] +'\\'+ fileName)
-        print(folderPath[folderPath.rfind('/') + 1:] +'\\'+ fileName)
+        tmpImage = Image.open(folderPath[folderPath.rfind('/') + 1:] + '\\' + fileName)
+        fileName = 'tmp\\' + fileName[: fileName.rfind('.') + 1] + 'jpg'
+        tmpImage.save(folderPath[folderPath.rfind('/') + 1:] + '\\' + fileName)
+        print(folderPath[folderPath.rfind('/') + 1:] + '\\' + fileName)
         return fileName
     return fileName
 
@@ -35,8 +36,8 @@ def cursorSelect(evt):
     middlePanelCanvas.create_image(0, 0, image=resizedImage, anchor=NW)
     middlePanelCanvas.image = resizedImage
     results = subprocess.run("python detect.py --image {f}".format(f=folderPath[folderPath.rfind('/') + 1:] + "\\" +
-                                                           checkIfItsJpg(value)),
-                   check=True, capture_output=True).stdout.decode("utf-8")
+                                                                     checkIfItsJpg(value)),
+                             check=True, capture_output=True).stdout.decode("utf-8")
     resultLabel["text"] = results;
     resizedImage = resizeImage(Image.open('results/' + value))
     rightPanelCanvas.create_image(0, 0, image=resizedImage, anchor=NW)
@@ -71,6 +72,13 @@ def resizeImage(originalImage):
     return resizedImage
 
 
+def authors():
+    authorsPopUp = Toplevel(root)
+    authorsPopUp.geometry("150x70")
+    authorsPopUp.title("Authors")
+    Label(authorsPopUp, text="Ayetijhya Desmukhya\nSujith Madesh\nJan Maliborski\nKuba Woch").pack()
+
+
 # Root
 root = Tk()
 root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
@@ -78,6 +86,8 @@ root.maxsize(WINDOW_WIDTH, WINDOW_HEIGHT)
 root.minsize(WINDOW_WIDTH, WINDOW_HEIGHT)
 root.resizable(0, 0)
 root.title("Face Recogniton Editor")
+infoPhoto = PhotoImage(file='images/tmp/info.png')
+root.iconphoto(False, infoPhoto)
 
 # Main Panel
 mainPanel = PanedWindow(bg='gray', borderwidth=1)
@@ -118,7 +128,8 @@ leftPanelButton.pack()
 leftPanelLabel1.pack()
 leftPanelListBox.pack()
 Label(leftPanelFrame, text="Results", anchor=N).pack()
-resultLabel = Label(leftPanelFrame, text=results, anchor=N)
+resultLabel = Label(leftPanelFrame, text=results, anchor=N, width=25, height=15, bg="white", relief=SUNKEN, bd=1)
 resultLabel.pack()
-
+Label(leftPanelFrame, text="", anchor=N).pack()
+Button(leftPanelFrame, text="Authors", width=25, height=1, anchor=S, command=authors).pack()
 root.mainloop()

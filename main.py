@@ -13,6 +13,9 @@ LEFT_PANEL_WIDTH = 200
 IMAGE_PANEL_WIDTH = 500
 IMAGE_PANEL_HEIGHT = 600
 SCALE_FACTOR = 1.5
+BACKGROUND_COLOR = "#460669"
+CONTRAST_COLOR="#e3c1f5"
+FONT_COLOR = "white"
 
 folderPath = ''
 results = ''
@@ -30,15 +33,19 @@ def checkIfItsJpg(fileName):
 
 def cursorSelect(evt):
     global results
+    # reset the canvases to null
+    middlePanelCanvas.delete("all")
+    rightPanelCanvas.delete("all")
+
     value = leftPanelListBox.get(leftPanelListBox.curselection())
     resizedImage = resizeImage(Image.open(folderPath + '/' + value))
     middlePanelCanvas.create_image(0, 0, image=resizedImage, anchor=NW)
     middlePanelCanvas.image = resizedImage
-    results = subprocess.run("python detect.py --image {f}".format(f=folderPath[folderPath.rfind('/') + 1:] + "\\" +
-                                                                     checkIfItsJpg(value)),
+    results = subprocess.run("python detect.py --image {f}".format(f=folderPath[folderPath.rfind('/') + 1:] +
+                                                                     "\\" + checkIfItsJpg(value)),
                              check=True, capture_output=True).stdout.decode("utf-8")
-    resultLabel["text"] = results;
-    resizedImage = resizeImage(Image.open('results/' + value[: value.rfind('.') + 1]+"jpg"))
+    resultLabel["text"] = results
+    resizedImage = resizeImage(Image.open('results/' + value[: value.rfind('.') + 1] + "jpg"))
     rightPanelCanvas.create_image(0, 0, image=resizedImage, anchor=NW)
     rightPanelCanvas.image = resizedImage
 
@@ -74,6 +81,7 @@ def resizeImage(originalImage):
 def authors():
     authorsPopUp = Toplevel(root)
     authorsPopUp.geometry("150x70")
+    authorsPopUp.resizable(0, 0)
     authorsPopUp.title("Authors")
     Label(authorsPopUp, text="Ayetijhya Desmukhya\nSujith Madesh\nJan Maliborski\nKuba Woch").pack()
 
@@ -89,15 +97,15 @@ infoPhoto = PhotoImage(file='images/tmp/info.png')
 root.iconphoto(False, infoPhoto)
 
 # Main Panel
-mainPanel = PanedWindow(bg='gray', borderwidth=1)
+mainPanel = PanedWindow(bg=BACKGROUND_COLOR, borderwidth=1)
 mainPanel.pack(fill=BOTH, expand=1)
 
 # Left Panel
 leftPanel = PanedWindow(mainPanel, orient=VERTICAL)
-leftPanelFrame = Frame(leftPanel)
+leftPanelFrame = Frame(leftPanel, bg=CONTRAST_COLOR)
 leftPanel.add(leftPanelFrame)
-Label(leftPanelFrame, text="Details", anchor=N).pack()
-leftPanelLabel1 = Label(leftPanelFrame, text="Image Files", anchor=N)
+Label(leftPanelFrame, text="Details", anchor=N, bg=CONTRAST_COLOR).pack()
+leftPanelLabel1 = Label(leftPanelFrame, text="Image Files", anchor=N, bg=CONTRAST_COLOR)
 leftPanelListBox = Listbox(leftPanelFrame, selectmode=SINGLE, width=30, height=15)
 leftPanelListBox.bind('<<ListboxSelect>>', cursorSelect)
 mainPanel.paneconfigure(leftPanel, width=LEFT_PANEL_WIDTH)
@@ -105,7 +113,7 @@ mainPanel.add(leftPanel)
 
 # Middle Panel
 middlePanel = PanedWindow(mainPanel, orient=VERTICAL)
-middlePanelLabel = Label(middlePanel, text="Original Image", anchor=N)
+middlePanelLabel = Label(middlePanel, text="Original Image", anchor=N, bg=BACKGROUND_COLOR, fg=FONT_COLOR)
 middlePanel.add(middlePanelLabel)
 middlePanelCanvas = Canvas(middlePanel, bd=3, relief=GROOVE)
 middlePanel.add(middlePanelCanvas)
@@ -114,21 +122,22 @@ mainPanel.add(middlePanel)
 
 # Right Panel
 rightPanel = PanedWindow(mainPanel, orient=VERTICAL)
-rightPanelLabel = Label(rightPanel, text="Face(s) Detected", anchor=N)
+rightPanelLabel = Label(rightPanel, text="Face(s) Detected", anchor=N, bg=BACKGROUND_COLOR, fg=FONT_COLOR)
 rightPanel.add(rightPanelLabel)
 rightPanelCanvas = Canvas(rightPanel, bd=3, relief=GROOVE)
 rightPanel.add(rightPanelCanvas)
 mainPanel.paneconfigure(rightPanel, width=IMAGE_PANEL_WIDTH)
 mainPanel.add(rightPanel)
 
-leftPanelButton = Button(leftPanelFrame, text='Browse', width=25, height=1,
-                         command=lambda: getDirectoryFileItems())
+leftPanelButton = Button(leftPanelFrame, text='Browse', width=25, height=1, bg=BACKGROUND_COLOR,
+                         command=lambda: getDirectoryFileItems(), fg=FONT_COLOR, borderwidth=0)
 leftPanelButton.pack()
 leftPanelLabel1.pack()
 leftPanelListBox.pack()
-Label(leftPanelFrame, text="Results", anchor=N).pack()
+Label(leftPanelFrame, text="Results", anchor=N, bg=CONTRAST_COLOR).pack()
 resultLabel = Label(leftPanelFrame, text=results, anchor=N, width=25, height=15, bg="white", relief=SUNKEN, bd=1)
 resultLabel.pack()
-Label(leftPanelFrame, text="", anchor=N).pack()
-Button(leftPanelFrame, text="Authors", width=25, height=1, anchor=S, command=authors).pack()
+Label(leftPanelFrame, text="", anchor=N, bg=CONTRAST_COLOR).pack()
+Button(leftPanelFrame, text="Authors", width=25, height=1, anchor=S, command=authors, bg=BACKGROUND_COLOR,
+       fg=FONT_COLOR, borderwidth=0).pack()
 root.mainloop()

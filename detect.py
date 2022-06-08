@@ -1,6 +1,8 @@
 from PIL import Image
 import cv2
 import argparse
+# from keras.models import load_model
+# import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--image')
@@ -13,14 +15,17 @@ ageProto = "age_deploy.prototxt"
 ageModel = "age_net.caffemodel"
 genderProto = "gender_deploy.prototxt"
 genderModel = "gender_net.caffemodel"
+# emotionModel = "best_model.h5"
 
 modelMeanValues = (78.4263377603, 87.7689143744, 114.895847746)
 ageList = ['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
 genderList = ['Male', 'Female']
+# emotions = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
 
 faceNet = cv2.dnn.readNet(faceModel, faceProto)
 ageNet = cv2.dnn.readNet(ageModel, ageProto)
 genderNet = cv2.dnn.readNet(genderModel, genderProto)
+# emotionModel = load_model(emotionModel)
 
 video = cv2.VideoCapture(args.image if args.image else 0)
 padding = 20
@@ -64,21 +69,26 @@ def getResult():
                                                                         :min(faceBox[2] + padding, frame.shape[1] - 1)]
 
             blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), modelMeanValues, swapRB=False)
+
             genderNet.setInput(blob)
-            genderPreds = genderNet.forward()
-            gender = genderList[genderPreds[0].argmax()]
+            genderPrediction = genderNet.forward()
+            gender = genderList[genderPrediction[0].argmax()]
             # print(f'Gender: {gender}')
 
             ageNet.setInput(blob)
-            agePreds = ageNet.forward()
-            age = ageList[agePreds[0].argmax()]
-            ageConfidence = agePreds[0][agePreds[0].argmax()]
+            agePrediction = ageNet.forward()
+            age = ageList[agePrediction[0].argmax()]
+            ageConfidence = agePrediction[0][agePrediction[0].argmax()]
 
             ac_percentage = "{:.0%}".format(round(ageConfidence, 2))
             ac_percentage = str(ac_percentage)
             # print(f'Age: {age[1:-1]} years')
 
-            cv2.putText(resultImg, f'{gender}, {age},{ac_percentage}', (faceBox[0], faceBox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+            # emotionPrediction = emotionModel.predict(blob)
+            # emotion = emotions[emotionPrediction[0].argmax()]
+
+            cv2.putText(resultImg, f'{gender}, {age},{ac_percentage}',
+                        (faceBox[0], faceBox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                         (0, 255, 255), 2, cv2.LINE_AA)
 
             img = Image.fromarray(cv2.cvtColor(resultImg, cv2.COLOR_BGR2RGB), 'RGB')
